@@ -13,7 +13,7 @@
 		<spring.version>3.2.4.RELEASE</spring.version>
 		<jackson.version>1.9.10</jackson.version>
 		<objectify.version>5.1.5</objectify.version>
-		<hibernate.version>5.2.4.Final</hibernate.version>
+		<hibernate.version>4.3.2.Final</hibernate.version>
 		<appengine.app.version>1</appengine.app.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
