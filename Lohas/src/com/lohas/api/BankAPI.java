@@ -32,8 +32,8 @@ import com.google.appengine.api.memcache.MemcacheServiceFactory;
 import com.lohas.api.model.CheckSignUpEmailRequest;
 import com.lohas.api.model.CheckSignUpEmailResponse;
 import com.lohas.api.model.ErrorResponse;
-import com.lohas.api.model.SampleRequest;
-import com.lohas.api.model.SampleResponse;
+import com.lohas.api.model.OpenBankRequest;
+import com.lohas.api.model.OpenBankResponse;
 import com.lohas.dao.BankerDao;
 import com.lohas.data.BankerJdo;
 
@@ -70,6 +70,24 @@ public class BankAPI {
 		
 	}
 	
+	/*
+	 * Open a new bank
+	 * Also register a banker for this bank at the same time
+	 */
+	@RequestMapping(value = "/openBank", method = RequestMethod.GET)
+	public @ResponseBody OpenBankResponse openBank(@Valid OpenBankRequest reqt) {
+		
+		/** TODO
+		 * Create and persist new BankerJdo
+		 * Create and persist new BankJdo
+		 * Two actions should be in same transaction
+		 */
+
+		OpenBankResponse resp = new OpenBankResponse();
+
+		return resp;
+		
+	}
 	
 	/*
 	 * Handle invalid input parameter exception

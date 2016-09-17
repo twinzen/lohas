@@ -11,6 +11,5 @@ public class CheckSignUpEmailResponse extends CommonResponse {
 	public void setIsEmailAvailable(Boolean isEmailAvailable) {
 		this.isEmailAvailable = isEmailAvailable;
 	}
-
 	
 }
