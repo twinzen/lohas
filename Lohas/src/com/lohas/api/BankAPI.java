@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.google.appengine.api.memcache.MemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
 import com.lohas.api.annotation.RequireLoggedIn;
+import com.lohas.api.constant.ErrorCode;
 import com.lohas.api.model.CheckSignUpEmailRequest;
 import com.lohas.api.model.CheckSignUpEmailResponse;
 import com.lohas.api.model.ErrorResponse;

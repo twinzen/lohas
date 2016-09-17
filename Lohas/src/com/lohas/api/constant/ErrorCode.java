@@ -1,4 +1,4 @@
-package com.lohas.api;
+package com.lohas.api.constant;
 
 public class ErrorCode {
 

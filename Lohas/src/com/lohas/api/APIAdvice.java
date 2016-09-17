@@ -3,32 +3,21 @@ package com.lohas.api;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 
 import com.lohas.api.model.CommonRequest;
 
 @Component
 @Aspect
-public class SystemArchitecture {
+public class APIAdvice {
 
-	@Pointcut("@annotation(org.springframework.web.bind.annotation.RequestMapping) &&"
-			+ "execution(* com.lohas.api.*.*(..))")
-	public void api () {}
-	
-	@Pointcut("@annotation(org.springframework.web.bind.annotation.RequestMapping) &&"
-			+ "@annotation(com.lohas.api.annotation.RequireLoggedIn) &&"
-			+ "execution(* com.lohas.api.*.*(..))")
-	public void apiRequireLoggedIn () {}
-	
-	
-	@Before("api()")
+	@Before("com.lohas.SystemArchitecture.api()")
 	public void beforeAPI (JoinPoint thisJoinPoint) {
 		System.out.println("beforeAPI");
 		System.out.println(thisJoinPoint);
 	}
 	
-	@Before("apiRequireLoggedIn()")
+	@Before("com.lohas.SystemArchitecture.apiRequireLoggedIn()")
 	public void beforeAPIRequireLoggedIn (JoinPoint thisJoinPoint) {
 		System.out.println("beforeAPIRequireLoggedIn");
 		for (Object arg : thisJoinPoint.getArgs()) {
@@ -40,4 +29,5 @@ public class SystemArchitecture {
 		}
 		System.out.println(thisJoinPoint);
 	}
+	
 }
