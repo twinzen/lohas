@@ -43,14 +43,14 @@
 		</dependency>
 
 		<dependency>
-		    <groupId>org.hibernate</groupId>
-		    <artifactId>hibernate-validator</artifactId>
-		    <version>${hibernate.version}</version>
-		</dependency>
-
-		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-aop</artifactId>
 			<version>${spring.version}</version>
 		</dependency>
 
@@ -62,10 +62,31 @@
 		</dependency>
 
 		<dependency>
+		    <groupId>org.hibernate</groupId>
+		    <artifactId>hibernate-validator</artifactId>
+		    <version>${hibernate.version}</version>
+		</dependency>
+
+		<dependency>
 			<groupId>com.googlecode.objectify</groupId>
 			<artifactId>objectify</artifactId>
 			<version>${objectify.version}</version>
 		</dependency>
+		
+		<!-- https://mvnrepository.com/artifact/org.aspectj/aspectjrt -->
+		<dependency>
+		    <groupId>org.aspectj</groupId>
+		    <artifactId>aspectjrt</artifactId>
+		    <version>1.7.3</version>
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.aspectj</groupId>
+		    <artifactId>aspectjweaver</artifactId>
+		    <version>1.7.3</version>
+		</dependency>
+		
+				
 	</dependencies>
 	<build>
 		<plugins>
