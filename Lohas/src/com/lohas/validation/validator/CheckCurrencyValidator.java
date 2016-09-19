@@ -19,12 +19,12 @@ public class CheckCurrencyValidator implements ConstraintValidator<CheckCurrency
 
 	@Override
 	public boolean isValid(String object, ConstraintValidatorContext constraintContext) {
-		if (Currency.getAvailableCurrencies().contains(object)) {
+		try {
+			Currency curr = Currency.getInstance(object);
 			return true;
-		} else {
-			return false;
+		} catch (IllegalArgumentException e) {
+        	return false;
 		}
-		
 	}
 
 }

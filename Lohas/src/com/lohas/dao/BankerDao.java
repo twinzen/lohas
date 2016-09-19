@@ -34,7 +34,7 @@ public class BankerDao {
 	 */
 	@SuppressWarnings("unchecked")
 	public void persistBankerJdo (BankerJdo bankerJdo) {
-		ofy().save().entities(BankerJdo.class).now();
+		ofy().save().entities(bankerJdo).now();
 	}
 
 	
