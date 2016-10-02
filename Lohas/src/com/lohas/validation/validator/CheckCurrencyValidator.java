@@ -19,6 +19,9 @@ public class CheckCurrencyValidator implements ConstraintValidator<CheckCurrency
 
 	@Override
 	public boolean isValid(String object, ConstraintValidatorContext constraintContext) {
+		if (object == null) {
+			return false;
+		}
 		try {
 			Currency curr = Currency.getInstance(object);
 			return true;

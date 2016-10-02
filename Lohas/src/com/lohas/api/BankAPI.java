@@ -1,7 +1,9 @@
 package com.lohas.api;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import javax.validation.Valid;
@@ -10,6 +12,7 @@ import javax.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindException;
+import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,8 +32,10 @@ import com.lohas.api.model.OpenBankRequest;
 import com.lohas.api.model.OpenBankResponse;
 import com.lohas.dao.BankDao;
 import com.lohas.dao.BankerDao;
+import com.lohas.dao.SessionDao;
 import com.lohas.data.BankJdo;
 import com.lohas.data.BankerJdo;
+import com.lohas.data.SessionJdo;
 
 
 @Controller
@@ -44,24 +49,31 @@ public class BankAPI {
 	Validator validator;
 	
 	@Autowired
+	SessionDao sessionDao;
+	
+	@Autowired
 	BankDao bankDao;
 	
 	@Autowired
 	BankerDao bankerDao;
 	
 	
-			
-	/*
+	/**
 	 * Check whether the Email was used by another banker already
+	 * 
+	 * @param reqt
+	 * @return
 	 */
 	@RequestMapping(value = "/checkSignUpEamil", method = RequestMethod.GET)
 	public @ResponseBody CheckSignUpEmailResponse checkSignUpEmail(@Valid CheckSignUpEmailRequest reqt) {
 		
-		boolean isEmailAvailable = true;
+		System.out.println("/checkSignUpEamil");
 		
-		BankerJdo bankJdo = bankerDao.retrieveBankerJdoByEmail(reqt.getEmail()); // Try to retrieve bankerJdo by email
-		if (bankJdo != null) {
-			isEmailAvailable = false; // Someone used this email, not available!
+		boolean isEmailAvailable = false;
+		
+		BankerJdo bankJdo = bankerDao.retrieveBankerJdoByEmail(reqt.getEmail().toLowerCase()); // Email must be in lower case always!
+		if (bankJdo == null) {
+			isEmailAvailable = true; // Someone used this email, not available!
 		}
 		
 		CheckSignUpEmailResponse resp = new CheckSignUpEmailResponse();
@@ -69,13 +81,21 @@ public class BankAPI {
 		return resp;
 		
 	}
-	
-	/*
+
+	/** 
 	 * Open a new bank
 	 * Also register a banker for this bank at the same time
+	 *  
+	 * @param reqt
+	 * @return
 	 */
 	@RequestMapping(value = "/openBank", method = RequestMethod.GET)
 	public @ResponseBody OpenBankResponse openBank(@Valid OpenBankRequest reqt) {
+
+		/**
+		 * TODO: Need to double check email is used or not
+		 */
+		
 		
 		/*
 		 * Persist the incoming data to data store - START
@@ -91,7 +111,7 @@ public class BankAPI {
 		bankerJdo.setBankerName(reqt.getAdminName());
 		bankerJdo.setAppellation(reqt.getAppellation());
 		bankerJdo.setPassword(reqt.getPassword());
-		bankerJdo.setPrimaryEmail(reqt.getEmail());
+		bankerJdo.setPrimaryEmail(reqt.getEmail().toLowerCase()); // email must be in lower case always
 		bankerJdo.setBankId(bankJdo.getBankId());
 		
 		bankerDao.persistBankerJdo(bankerJdo); // Persist bankerJdo
@@ -104,6 +124,21 @@ public class BankAPI {
 		 * Persist the incoming data to data store - END
 		 */
 		
+		/*
+		 * Start a session - START
+		 */
+		
+		final SessionJdo sessionJdo = new SessionJdo();
+		sessionJdo.setUserId(bankerJdo.getBankerId());
+		sessionJdo.setUserType("BANKER");
+		sessionJdo.setStartDateTime(new Date());
+		sessionJdo.setToken(UUID.randomUUID().toString());
+		
+		sessionDao.persistSessionJdo(sessionJdo);
+		
+		/*
+		 * Start a session - END
+		 */
 		
 		/*
 		 * Prepare the response - START
@@ -123,6 +158,7 @@ public class BankAPI {
 		
 		resp.setBank(bank);
 		resp.setBanker(banker);
+		resp.setToken(sessionJdo.getToken());
 		
 		return resp;
 		
@@ -140,8 +176,8 @@ public class BankAPI {
 		
 		List<String> reasonDetails = new ArrayList<String>();
 		
-		for (ObjectError error : e.getBindingResult().getAllErrors()) {
-			String reasonDetail = error.getCode()+"|"+error.getDefaultMessage();
+		for (FieldError error : e.getFieldErrors()) {
+			String reasonDetail = error.getField()+"|"+error.getCode();
 			reasonDetails.add(reasonDetail);
 		}
 

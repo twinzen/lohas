@@ -10,6 +10,11 @@ public class CommonResponse {
 	 */
 	private Integer responseCode;
 	
+	/*
+	 * Token
+	 */
+	private String token;
+	
 	public CommonResponse () {
 		this.setResponseCode(0); // Default normal response = 0
 	}
@@ -20,6 +25,14 @@ public class CommonResponse {
 
 	public void setResponseCode(Integer responseCode) {
 		this.responseCode = responseCode;
+	}
+
+	public String getToken() {
+		return token;
+	}
+
+	public void setToken(String token) {
+		this.token = token;
 	}
 
 	

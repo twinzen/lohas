@@ -26,7 +26,7 @@ public class BankerDao {
 	 * Get banker by primary email
 	 */
 	public BankerJdo retrieveBankerJdoByEmail (String email) {
-		return ofy().load().type(BankerJdo.class).filter("email", email).first().now();
+		return ofy().load().type(BankerJdo.class).filter("primaryEmail", email).first().now();
 	}
 	
 	/*

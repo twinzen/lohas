@@ -6,6 +6,7 @@ import javax.validation.constraints.Pattern;
 
 import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.NotEmpty;
 
 import com.lohas.validation.constraints.CheckCurrency;
 
@@ -16,6 +17,7 @@ public class OpenBankRequest extends CommonRequest {
 	 */
 	@Email(message="Please provide a valid email address")
 	@NotNull
+	@NotEmpty
 	private String email;
 	
 
@@ -23,6 +25,7 @@ public class OpenBankRequest extends CommonRequest {
 	 * Password of the first banker login
 	 */
 	@NotNull
+	@NotEmpty
 	@Length(min = 6, message = "The field must be at least 6 characters")
 	@Pattern(regexp = "^[A-Za-z0-9]+$")
 	private String password;
@@ -31,13 +34,14 @@ public class OpenBankRequest extends CommonRequest {
 	 * Name of the first banker
 	 */
 	@NotNull
-	@Pattern(regexp = "^[A-Za-z0-9]+$")
+	@NotEmpty
 	private String adminName;
 	
 	/*
 	 * Name of the first banker
 	 */
 	@NotNull
+	@NotEmpty
 	@Pattern(regexp = "^[A-Za-z0-9]+$")
 	private String appellation;
 	
@@ -45,6 +49,7 @@ public class OpenBankRequest extends CommonRequest {
 	 * Base currency of this bank
 	 */
 	@NotNull
+	@NotEmpty
 	@CheckCurrency
 	private String baseCurrency;
 
