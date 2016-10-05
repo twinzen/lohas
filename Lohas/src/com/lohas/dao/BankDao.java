@@ -17,6 +17,13 @@ public class BankDao {
     }
 
 	/*
+	 * Get bank by primary key
+	 */
+	public BankJdo retrieveBankJdo (Long bankId) {
+		return ofy().load().type(BankJdo.class).id(bankId).now(); 
+	}
+	
+	/*
 	 * Persist bankJdo 
 	 */
 	public void persistBankJdo (BankJdo bankJdo) {

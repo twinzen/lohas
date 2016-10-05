@@ -21,7 +21,7 @@ public class Bank {
 	private String baseCurrency; // Base Currency
 	
 	/*
-	 * Banker Admin List
+	 * Banker Id Admin List
 	 */
 	private List<Banker> bankerAdminList;
 
@@ -56,4 +56,7 @@ public class Bank {
 	public void setBankerAdminList(List<Banker> bankerAdminList) {
 		this.bankerAdminList = bankerAdminList;
 	}
+
+	
+	
 }

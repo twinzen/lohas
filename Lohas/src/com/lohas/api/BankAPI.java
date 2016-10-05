@@ -23,11 +23,13 @@ import com.google.appengine.api.memcache.MemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
 import com.lohas.api.annotation.RequireLoggedIn;
 import com.lohas.api.constant.ErrorCode;
+import com.lohas.api.exception.ApplicationException;
 import com.lohas.api.model.Bank;
 import com.lohas.api.model.Banker;
 import com.lohas.api.model.CheckSignUpEmailRequest;
 import com.lohas.api.model.CheckSignUpEmailResponse;
 import com.lohas.api.model.ErrorResponse;
+import com.lohas.api.model.ModelHelper;
 import com.lohas.api.model.OpenBankRequest;
 import com.lohas.api.model.OpenBankResponse;
 import com.lohas.dao.BankDao;
@@ -40,7 +42,7 @@ import com.lohas.data.SessionJdo;
 
 @Controller
 @RequestMapping("/api")
-public class BankAPI {
+public class BankAPI extends CommonAPI {
 
 	static Logger log = Logger.getLogger(BankAPI.class.getName());
 	MemcacheService cache = MemcacheServiceFactory.getMemcacheService();
@@ -71,8 +73,8 @@ public class BankAPI {
 		
 		boolean isEmailAvailable = false;
 		
-		BankerJdo bankJdo = bankerDao.retrieveBankerJdoByEmail(reqt.getEmail().toLowerCase()); // Email must be in lower case always!
-		if (bankJdo == null) {
+		BankerJdo bankerJdo = bankerDao.retrieveBankerJdoByEmail(reqt.getEmail().toLowerCase()); // Email must be in lower case always!
+		if (bankerJdo == null) {
 			isEmailAvailable = true; // Someone used this email, not available!
 		}
 		
@@ -88,24 +90,25 @@ public class BankAPI {
 	 *  
 	 * @param reqt
 	 * @return
+	 * @throws ApplicationException 
 	 */
 	@RequestMapping(value = "/openBank", method = RequestMethod.GET)
-	public @ResponseBody OpenBankResponse openBank(@Valid OpenBankRequest reqt) {
+	public @ResponseBody OpenBankResponse openBank(@Valid OpenBankRequest reqt) throws ApplicationException {
 
-		/**
-		 * TODO: Need to double check email is used or not
-		 */
-		
+		// Play safe, check the email was registered before or not.
+		final BankerJdo bankerJdoCheker = bankerDao.retrieveBankerJdoByEmail(reqt.getEmail().toLowerCase()); // Email must be in lower case always!
+		if (bankerJdoCheker != null) {
+			throw new ApplicationException(ErrorCode.EMAIL_ALREADY_USED, "Email was already registered before."); // Good bye!
+		}		
 		
 		/*
-		 * Persist the incoming data to data store - START
+		 * Persist the incoming data to data store
 		 */
-		
 		final BankJdo bankJdo = new BankJdo(); // Format bankJdo
 		bankJdo.setBankName("Bank of "+reqt.getAdminName());
 		bankJdo.setBaseCurrency(reqt.getBaseCurrency());
-
-		bankDao.persistBankJdo(bankJdo); // Persist bankJdo because bankerJdo need bankId
+		bankDao.persistBankJdo(bankJdo); // Persist bankJdo first because bankerJdo need bankId, 
+		// That's why bankJdo and bankerJdo are not in one transaction
 
 		final BankerJdo bankerJdo = new BankerJdo(); // Format bankerJdo
 		bankerJdo.setBankerName(reqt.getAdminName());
@@ -113,79 +116,36 @@ public class BankAPI {
 		bankerJdo.setPassword(reqt.getPassword());
 		bankerJdo.setPrimaryEmail(reqt.getEmail().toLowerCase()); // email must be in lower case always
 		bankerJdo.setBankId(bankJdo.getBankId());
-		
 		bankerDao.persistBankerJdo(bankerJdo); // Persist bankerJdo
 		
-		bankJdo.setBankerAdminList(new ArrayList<Long>(){{add(bankerJdo.getBankerId());}}); // Put bankerId to bankerAdminList
-		
+		bankJdo.setBankerAdminList(new ArrayList<Long>(){{add(bankerJdo.getBankerId());}}); // Put bankerId to bankerAdminList		
 		bankDao.persistBankJdo(bankJdo); // Persist bankJdo again because bankerAdminList updated
 		
-		/*
-		 * Persist the incoming data to data store - END
-		 */
 		
 		/*
-		 * Start a session - START
+		 * Start a session
 		 */
-		
 		final SessionJdo sessionJdo = new SessionJdo();
 		sessionJdo.setUserId(bankerJdo.getBankerId());
 		sessionJdo.setUserType("BANKER");
 		sessionJdo.setStartDateTime(new Date());
 		sessionJdo.setToken(UUID.randomUUID().toString());
-		
 		sessionDao.persistSessionJdo(sessionJdo);
 		
-		/*
-		 * Start a session - END
-		 */
 		
 		/*
-		 * Prepare the response - START
+		 * Prepare the response
 		 */
 		OpenBankResponse resp = new OpenBankResponse();
-		
-		final Banker banker = new Banker();
-		banker.setBankerId(bankerJdo.getBankerId());
-		banker.setBankerName(bankerJdo.getBankerName());
-		banker.setPrimaryEmail(bankerJdo.getPrimaryEmail());
-		banker.setAppellation(bankerJdo.getAppellation());
-		
-		final Bank bank = new Bank();
-		bank.setBankId(bankJdo.getBankId());
-		bank.setBaseCurrency(bankJdo.getBaseCurrency());
-		bank.setBankerAdminList(new ArrayList<Banker>(){{add(banker);}});
-		
+		final Banker banker = ModelHelper.convertBankerJdoToBanker(bankerJdo);
+		final Bank bank = ModelHelper.convertBankJdoToBank(bankJdo, new ArrayList<BankerJdo>(){{add(bankerJdo);}});
 		resp.setBank(bank);
 		resp.setBanker(banker);
 		resp.setToken(sessionJdo.getToken());
 		
 		return resp;
 		
-		/*
-		 * Prepare the response - END
-		 */
-		
 	}
 	
-	/*
-	 * Handle invalid input parameter exception
-	 */
-	@ExceptionHandler(BindException.class)
-	public @ResponseBody ErrorResponse handleInputParametersException(BindException e) {
-		
-		List<String> reasonDetails = new ArrayList<String>();
-		
-		for (FieldError error : e.getFieldErrors()) {
-			String reasonDetail = error.getField()+"|"+error.getCode();
-			reasonDetails.add(reasonDetail);
-		}
-
-		ErrorResponse resp = new ErrorResponse();
-		resp.setReasonCode(ErrorCode.INVALID_PARAMS);
-		resp.setReasonDetails(reasonDetails);
-		
-		return resp;
-	}
 	
 }

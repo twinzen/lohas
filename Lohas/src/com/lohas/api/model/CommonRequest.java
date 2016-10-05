@@ -12,7 +12,7 @@ public class CommonRequest {
 	 * User ID
 	 * It is either bankerId or customerId
 	 */
-	private String userId;
+	private Long userId;
 	
 	public String getToken() {
 		return token;
@@ -22,11 +22,11 @@ public class CommonRequest {
 		this.token = token;
 	}
 
-	public String getUserId() {
+	public Long getUserId() {
 		return userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(Long userId) {
 		this.userId = userId;
 	}
 

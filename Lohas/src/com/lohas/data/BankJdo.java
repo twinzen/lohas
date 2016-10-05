@@ -33,7 +33,7 @@ public class BankJdo {
 	 * Who have admin right to manage this bank?
 	 * List of banker ID
 	 */
-	private List<Long> bankerAdminList;
+	private List<Long> bankerIdAdminList;
 
 	public Long getBankId() {
 		return bankId;
@@ -59,12 +59,12 @@ public class BankJdo {
 		this.baseCurrency = baseCurrency;
 	}
 
-	public List<Long> getBankerAdminList() {
-		return bankerAdminList;
+	public List<Long> getBankerIdAdminList() {
+		return bankerIdAdminList;
 	}
 
-	public void setBankerAdminList(List<Long> bankerAdminList) {
-		this.bankerAdminList = bankerAdminList;
+	public void setBankerAdminList(List<Long> bankerIdAdminList) {
+		this.bankerIdAdminList = bankerIdAdminList;
 	} 
 
 	
