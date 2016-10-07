@@ -1,6 +1,6 @@
 package com.lohas.api.model;
 
-public class BankerOneResponse {
+public class BankerOneResponse extends CommonResponse {
 
 
 	/*
