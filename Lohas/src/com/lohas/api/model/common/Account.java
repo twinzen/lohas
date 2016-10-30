@@ -1,28 +1,23 @@
-package com.lohas.data;
+package com.lohas.api.model.common;
 
 import java.math.BigDecimal;
 import java.util.Date;
 
-import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Index;
 
-@Entity
-public class AccountJdo {
+public class Account {
 
 	/*
 	 * Account ID
 	 * Primary key
 	 */
-	@Id
-	@Index
 	private Long accountId;
 	
 	/*
 	 * Account Code
 	 * The external identifier of account
 	 */
-	@Index
 	private String accountCode;
 	
 	
@@ -70,11 +65,14 @@ public class AccountJdo {
 	private BigDecimal interestRate;
 	
 	/*
-	 * Customer ID
-	 * This account is belong to which customer?
+	 * Account balance
 	 */
-	@Index
-	private Long customerId;
+	private BigDecimal accountBalanceAmount;
+	
+	/*
+	 * Account gain/loss
+	 */
+	private BigDecimal accountGainLossAmount;
 
 	public Long getAccountId() {
 		return accountId;
@@ -140,14 +138,6 @@ public class AccountJdo {
 		this.accountStatus = accountStatus;
 	}
 
-	public Long getCustomerId() {
-		return customerId;
-	}
-
-	public void setCustomerId(Long customerId) {
-		this.customerId = customerId;
-	}
-
 	public BigDecimal getInterestRate() {
 		return interestRate;
 	}
@@ -155,4 +145,22 @@ public class AccountJdo {
 	public void setInterestRate(BigDecimal interestRate) {
 		this.interestRate = interestRate;
 	}
+
+	public BigDecimal getAccountBalanceAmount() {
+		return accountBalanceAmount;
+	}
+
+	public void setAccountBalanceAmount(BigDecimal accountBalanceAmount) {
+		this.accountBalanceAmount = accountBalanceAmount;
+	}
+
+	public BigDecimal getAccountGainLossAmount() {
+		return accountGainLossAmount;
+	}
+
+	public void setAccountGainLossAmount(BigDecimal accountGainLossAmount) {
+		this.accountGainLossAmount = accountGainLossAmount;
+	}
+	
+	
 }

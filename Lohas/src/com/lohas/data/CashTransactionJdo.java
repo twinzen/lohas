@@ -1,5 +1,6 @@
 package com.lohas.data;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
 
@@ -30,6 +31,7 @@ public class CashTransactionJdo {
 	 * What kind of transaction is?
 	 * Deposit? Withdraw? or Else?
 	 */
+	@Index
 	private String transactionType;
 	
 	/*
@@ -43,7 +45,7 @@ public class CashTransactionJdo {
 	 * Amount
 	 * How much is it?
 	 */
-	private BigInteger Amount;
+	private BigDecimal amount;
 	
 	/*
 	 * Currency
@@ -96,12 +98,12 @@ public class CashTransactionJdo {
 		this.transactionDateTime = transactionDateTime;
 	}
 
-	public BigInteger getAmount() {
-		return Amount;
+	public BigDecimal getAmount() {
+		return amount;
 	}
 
-	public void setAmount(BigInteger amount) {
-		Amount = amount;
+	public void setAmount(BigDecimal amount) {
+		this.amount = amount;
 	}
 
 	public String getCurrency() {

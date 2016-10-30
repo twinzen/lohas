@@ -1,20 +1,19 @@
-package com.lohas.data;
+package com.lohas.api.model.common;
 
+import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
-import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Index;
+import com.lohas.data.BlobImageJdo;
 
-@Entity
-public class CustomerJdo {
-	
+public class Customer {
+
 	/*
 	 * Customer ID
 	 * Primary key
 	 */
-	@Id
-	@Index
 	private Long customerId;
 	
 	/*
@@ -34,22 +33,20 @@ public class CustomerJdo {
 	 * Date Of Birth
 	 * I just want to know your age
 	 */
-	@Index
 	private Date dateOfBirth;
 	
 	
 	/*
-	 * Icon Picture
-	 * Your face your pic 
+	 * Profile Picture
+	 * Your face your pic - URL
 	 */
-	private BlobImageJdo profilePic;
+	private String profilePicUrl;
 	
 	
 	/*
 	 * User Name
 	 * Login name
 	 */
-	@Index
 	private String username;
 	
 	
@@ -57,21 +54,17 @@ public class CustomerJdo {
 	 * Email
 	 * Email for communication only
 	 */
-	@Index
 	private String email;
 	
 	/*
-	 * Password
-	 * You need it for login
+	 * Total asset value in base currency
 	 */
-	private String password;
+	private BigDecimal totalAssetValueAmount;
 	
 	/*
-	 * Bank ID
-	 * This customer is belong to which bank?
+	 * Total gain & loss in base currency
 	 */
-	@Index
-	private Long bankId;
+	private BigDecimal totalGainLossAmount;
 
 	public Long getCustomerId() {
 		return customerId;
@@ -105,12 +98,12 @@ public class CustomerJdo {
 		this.dateOfBirth = dateOfBirth;
 	}
 
-	public BlobImageJdo getProfilePic() {
-		return profilePic;
+	public String getProfilePicUrl() {
+		return profilePicUrl;
 	}
 
-	public void setProfilePic(BlobImageJdo profilePic) {
-		this.profilePic = profilePic;
+	public void setProfilePicUrl(String profilePicUrl) {
+		this.profilePicUrl = profilePicUrl;
 	}
 
 	public String getUsername() {
@@ -129,19 +122,20 @@ public class CustomerJdo {
 		this.email = email;
 	}
 
-	public String getPassword() {
-		return password;
+	public BigDecimal getTotalAssetValueAmount() {
+		return totalAssetValueAmount;
 	}
 
-	public void setPassword(String password) {
-		this.password = password;
+	public void setTotalAssetValueAmount(BigDecimal totalAssetValueAmount) {
+		this.totalAssetValueAmount = totalAssetValueAmount;
 	}
 
-	public Long getBankId() {
-		return bankId;
+	public BigDecimal getTotalGainLossAmount() {
+		return totalGainLossAmount;
 	}
 
-	public void setBankId(Long bankId) {
-		this.bankId = bankId;
+	public void setTotalGainLossAmount(BigDecimal totalGainLossAmount) {
+		this.totalGainLossAmount = totalGainLossAmount;
 	}
+
 }

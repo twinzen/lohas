@@ -1,5 +1,8 @@
 package com.lohas.api.model;
 
+import com.lohas.api.model.common.Bank;
+import com.lohas.api.model.common.Banker;
+
 public class LoginResponse extends CommonResponse {
 
 

@@ -1,5 +1,8 @@
 package com.lohas.data;
 
+import com.googlecode.objectify.annotation.Subclass;
+
+@Subclass
 public class BlobImageJdo {
 
 	/*

@@ -1,4 +1,4 @@
-package com.lohas.api.model;
+package com.lohas.api.model.common;
 
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Index;

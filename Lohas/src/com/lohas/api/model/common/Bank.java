@@ -1,4 +1,4 @@
-package com.lohas.api.model;
+package com.lohas.api.model.common;
 
 import java.util.List;
 
