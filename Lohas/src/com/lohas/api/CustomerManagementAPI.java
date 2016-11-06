@@ -21,6 +21,8 @@ import com.google.appengine.api.memcache.MemcacheServiceFactory;
 import com.lohas.api.annotation.RequireLoggedIn;
 import com.lohas.api.constant.ErrorCode;
 import com.lohas.api.exception.ApplicationException;
+import com.lohas.api.model.GetCustomersRequest;
+import com.lohas.api.model.GetCustomersResponse;
 import com.lohas.api.model.LoginRequest;
 import com.lohas.api.model.LoginResponse;
 import com.lohas.api.model.RegisterCustomerRequest;
@@ -116,6 +118,8 @@ public class CustomerManagementAPI extends CommonAPI {
 		}
 		log.info("Retrieve bankJdo completed. bankId:["+bankJdo.getBankId()+"]");
 		
+		//TODO Check if the username has been taken in this bank
+		
 		
 		/*
 		 * Create customer
@@ -191,9 +195,59 @@ public class CustomerManagementAPI extends CommonAPI {
 		RegisterCustomerResponse resp = new RegisterCustomerResponse();
 		resp.setCustomer(customer);
 		resp.setAccount(account);
-		log.info("API CustomerManagementAPI end.");
+		log.info("API registerCustomer end.");
 		return resp;
 		
+	}
+	
+	
+	@RequireLoggedIn
+	@RequestMapping(value = "/getCustomers", method = RequestMethod.GET)
+	public @ResponseBody GetCustomersResponse getCustomers (@Valid GetCustomersRequest reqt) throws ApplicationException {
+		
+		log.info("API getCustomers start.");
+		
+		/*
+		 * Retrieve banker itself
+		 */
+		BankerJdo bankerJdo = bankerDao.retrieveBankerJdo(reqt.getUserId());
+		if (bankerJdo == null){ 
+			// Check whether could get bankerJdo by given user id.
+			//If couldn't, throw exception and say good bye
+			log.warning("banker cannot be found with given user id.");
+			throw new ApplicationException(ErrorCode.ERROR, "Internal Error");
+		}
+		log.info("Retrieve bankerJdo completed. bankerId:["+bankerJdo.getBankerId()+"]");
+		
+		/*
+		 * Retrieve customers which belong to the bank
+		 */
+		List<CustomerJdo> customerJdos = customerDao.retrieveCustomerJdos(bankerJdo.getBankId());
+		log.info("Retrieve customerJdos completed. No. of customer:["+customerJdos.size()+"]");
+		
+		
+		/*
+		 * Start calculating customer's portfolio
+		 */
+		List<Customer> customers = new ArrayList<Customer>(); // List of customer object to be returned in resp
+		for (CustomerJdo customerJdo: customerJdos) {
+			// Calculate each account balance first
+			List<AccountJdo> accountJdos = accountDao.retrieveAccountJdos(customerJdo.getCustomerId());
+			log.info("Retrieve accountJdos completed. customerId: ["+customerJdo.getCustomerId() +"]. No. of account:["+accountJdos.size()+"]"); 
+			List<Account> accounts = new ArrayList<Account>();
+			for (AccountJdo accountJdo: accountJdos) {
+				List<CashTransactionJdo> transactionJdos = cashTransactionDao.retrieveCashTransactionJdos(accountJdo.getAccountId());
+				log.info("Retrieve accountJdos completed. customerId/accountId: ["+customerJdo.getCustomerId()+"/"+accountJdo.getAccountId()+"]. No. of txn:["+transactionJdos.size()+"]"); 
+				accounts.add(ModelHelper.convertAccountJdoToAccount(accountJdo, transactionJdos));
+			}
+			// Sum up all account balance= customer balance
+			customers.add(ModelHelper.convertCustomerJdoToCustomer(customerJdo, accounts));
+		}
+		
+		GetCustomersResponse resp = new GetCustomersResponse();
+		resp.setCustomers(customers);
+		log.info("API getCustomers end.");
+		return resp;
 	}
 
 }

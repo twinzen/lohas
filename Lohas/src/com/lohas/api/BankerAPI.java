@@ -188,14 +188,6 @@ public class BankerAPI extends CommonAPI {
 		log.info("Retrieve bankerJdoAdminList completed.");
 		
 		/*
-		 * Retrieve banker's customers
-		 */
-		
-		/**
-		 * TODO: Retrieve banker's customer
-		 */
-		
-		/*
 		 * Prepare the response
 		 */
 		final Banker banker = ModelHelper.convertBankerJdoToBanker(bankerJdo); // Convert bankerJdo to banker model 

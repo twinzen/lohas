@@ -107,15 +107,16 @@ public class ModelHelper {
 		customer.setEmail(customerJdo.getEmail());
 		customer.setProfilePicUrl(customerJdo.getProfilePic().getImageUrl());
 		customer.setUsername(customerJdo.getUsername());
-		BigDecimal totalBalanceAmount = new BigDecimal(0);
+		BigDecimal totalAssetValueAmount = new BigDecimal(0);
 		BigDecimal totalGainLossAmount = new BigDecimal(0);
 		for (Account account : accounts) {
 			// Add all account amount = total assest value
-			totalBalanceAmount = totalBalanceAmount.add(account.getAccountBalanceAmount()); 
+			totalAssetValueAmount = totalAssetValueAmount.add(account.getAccountBalanceAmount()); 
 			// Add all account gain/lost = total gain/loss
 			totalGainLossAmount = totalGainLossAmount.add(account.getAccountGainLossAmount()); 
 		}
-		
+		customer.setTotalAssetValueAmount(totalAssetValueAmount);
+		customer.setTotalGainLossAmount(totalGainLossAmount);
 		return customer;
 	}
 
