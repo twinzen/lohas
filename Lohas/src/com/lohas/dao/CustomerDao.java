@@ -41,6 +41,13 @@ public class CustomerDao {
 	}
 	
 	/*
+	 * Get customers by bankId and usernames
+	 */
+	public List<CustomerJdo> retrieveCustomerJdosByUsernames (Long bankId, String[] usernames) {
+		return ofy().load().type(CustomerJdo.class).filter("bankId", bankId).filter("username IN", usernames).list();
+	}
+	
+	/*
 	 * Persist customerJdo
 	 */
 	@SuppressWarnings("unchecked")

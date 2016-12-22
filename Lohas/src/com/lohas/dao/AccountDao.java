@@ -28,10 +28,10 @@ public class AccountDao {
 	}
 	
 	/*
-	 * Get account by primary account code
+	 * Get account by primary account code and bank Id
 	 */
-	public AccountJdo retrieveAccountJdoByAccountCode (String accountCode) {
-		return ofy().load().type(AccountJdo.class).filter("accountCode", accountCode).first().now();
+	public AccountJdo retrieveAccountJdoByAccountCodeBankId (String accountCode, Long bankId) {
+		return ofy().load().type(AccountJdo.class).filter("bankId", bankId).filter("accountCode", accountCode).first().now();
 	}
 	
 	/*

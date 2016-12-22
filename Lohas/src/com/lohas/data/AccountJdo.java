@@ -75,6 +75,13 @@ public class AccountJdo {
 	 */
 	@Index
 	private Long customerId;
+	
+	/*
+	 * Bank ID
+	 * This account is belong to which bank?
+	 */
+	@Index
+	private Long bankId;
 
 	public Long getAccountId() {
 		return accountId;
@@ -154,5 +161,13 @@ public class AccountJdo {
 
 	public void setInterestRate(BigDecimal interestRate) {
 		this.interestRate = interestRate;
+	}
+
+	public Long getBankId() {
+		return bankId;
+	}
+
+	public void setBankId(Long bankId) {
+		this.bankId = bankId;
 	}
 }

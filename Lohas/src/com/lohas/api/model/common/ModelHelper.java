@@ -77,8 +77,12 @@ public class ModelHelper {
 		BigDecimal accountBalanceAmount = new BigDecimal(0);
 		BigDecimal accountGainLossAmount = new BigDecimal(0);
 		for (CashTransactionJdo transactionJdo : transactionJdos) {
-			// Add all txn amount = account balance
-			accountBalanceAmount = accountBalanceAmount.add(transactionJdo.getAmount()); 
+			// Sum up all txn amount = account balance
+			if ("DEPOSIT".equals(transactionJdo.getTransactionType())) {
+				accountBalanceAmount = accountBalanceAmount.add(transactionJdo.getAmount());
+			} else {
+				accountBalanceAmount = accountBalanceAmount.subtract(transactionJdo.getAmount());
+			}
 			if (transactionJdo.getTransactionType().equals("INTEREST")) {
 				// Add all interest = gain/loss
 				accountGainLossAmount = accountGainLossAmount.add(transactionJdo.getAmount()); 
@@ -118,6 +122,26 @@ public class ModelHelper {
 		customer.setTotalAssetValueAmount(totalAssetValueAmount);
 		customer.setTotalGainLossAmount(totalGainLossAmount);
 		return customer;
+	}
+	
+	/**
+	 * Convert CashTransactionJdo to CashTransaction model
+	 * Most of attributes should be converted
+	 * 
+	 * @param cashTransactionJdo
+	 * @return
+	 */
+	public static CashTransaction convertCashTransactionJdoToCashTransaction (CashTransactionJdo cashTransactionJdo) {
+		CashTransaction cashTransaction = new CashTransaction();
+		cashTransaction.setTransactionId(cashTransactionJdo.getTransactionId());
+		cashTransaction.setTransactionCode(cashTransactionJdo.getTransactionCode());
+		cashTransaction.setTransactionDateTime(cashTransactionJdo.getTransactionDateTime());
+		cashTransaction.setTransactionType(cashTransactionJdo.getTransactionType());
+		cashTransaction.setAmount(cashTransactionJdo.getAmount());
+		cashTransaction.setCurrency(cashTransactionJdo.getCurrency());
+		cashTransaction.setNarrative(cashTransactionJdo.getNarrative());
+		cashTransaction.setAccountId(cashTransactionJdo.getAccountId());
+		return cashTransaction;
 	}
 
 }

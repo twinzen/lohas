@@ -68,9 +68,11 @@ public class DataHelper {
 			Date accountOpenDate,
 			String accountStatus,
 			BigDecimal interestRate,
-			Long customerId) {
+			Long customerId,
+			Long bankId) {
 		AccountJdo accountJdo = new AccountJdo();
 		accountJdo.setCustomerId(customerId);
+		accountJdo.setBankId(bankId);
 		accountJdo.setAccountCode(accountCode);
 		accountJdo.setAccountType(accountType);
 		accountJdo.setAccountCurrency(accountCurrency);

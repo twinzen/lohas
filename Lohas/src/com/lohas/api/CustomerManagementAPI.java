@@ -2,6 +2,7 @@ package com.lohas.api;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -148,7 +149,8 @@ public class CustomerManagementAPI extends CommonAPI {
 				new Date(), // Open date
 				"OPEN", // Status
 				reqt.getInterestRate(), // Interest rate
-				customerJdo.getCustomerId());
+				customerJdo.getCustomerId(),
+				bankerJdo.getBankId());
 		accountDao.persistAccountJdo(accountJdo);
 		log.info("Create and persist accountJdo completed. accountId: ["+accountJdo.getAccountId()+"]");
 		
@@ -222,7 +224,15 @@ public class CustomerManagementAPI extends CommonAPI {
 		/*
 		 * Retrieve customers which belong to the bank
 		 */
-		List<CustomerJdo> customerJdos = customerDao.retrieveCustomerJdos(bankerJdo.getBankId());
+		List<CustomerJdo> customerJdos = null;
+		if (reqt.getUsernames() != null &&
+				reqt.getUsernames().length > 0) {
+			// Retrieve by customers Ids given
+			customerJdos = customerDao.retrieveCustomerJdosByUsernames(bankerJdo.getBankId(), reqt.getUsernames());
+		} else {
+			// Retrieve all customers
+			customerJdos = customerDao.retrieveCustomerJdos(bankerJdo.getBankId());
+		}
 		log.info("Retrieve customerJdos completed. No. of customer:["+customerJdos.size()+"]");
 		
 		
@@ -249,5 +259,6 @@ public class CustomerManagementAPI extends CommonAPI {
 		log.info("API getCustomers end.");
 		return resp;
 	}
+	
 
 }
