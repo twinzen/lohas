@@ -242,7 +242,7 @@ public class CustomerManagementAPI extends CommonAPI {
 		List<Customer> customers = new ArrayList<Customer>(); // List of customer object to be returned in resp
 		for (CustomerJdo customerJdo: customerJdos) {
 			// Calculate each account balance first
-			List<AccountJdo> accountJdos = accountDao.retrieveAccountJdos(customerJdo.getCustomerId());
+			List<AccountJdo> accountJdos = accountDao.retrieveAccountJdos(customerJdo.getCustomerId(), bankerJdo.getBankId());
 			log.info("Retrieve accountJdos completed. customerId: ["+customerJdo.getCustomerId() +"]. No. of account:["+accountJdos.size()+"]"); 
 			List<Account> accounts = new ArrayList<Account>();
 			for (AccountJdo accountJdo: accountJdos) {

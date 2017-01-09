@@ -26,6 +26,8 @@ import com.lohas.api.model.GetAccountsRequest;
 import com.lohas.api.model.GetAccountsResponse;
 import com.lohas.api.model.GetCustomersRequest;
 import com.lohas.api.model.GetCustomersResponse;
+import com.lohas.api.model.GetTransactionsRequest;
+import com.lohas.api.model.GetTransactionsResponse;
 import com.lohas.api.model.LoginRequest;
 import com.lohas.api.model.LoginResponse;
 import com.lohas.api.model.NewCashTxnRequest;
@@ -171,10 +173,14 @@ public class AccountAPI extends CommonAPI {
 		log.info("Retrieve bankerJdo completed. bankerId:["+bankerJdo.getBankerId()+"]");
 		
 		/*
-		 * Retrieve customers which belong to the bank
+		 * Retrieve accounts which belong to the customer
 		 */
-		List<AccountJdo> accountJdos = accountDao.retrieveAccountJdos(reqt.getCustomerId());
+		List<AccountJdo> accountJdos = accountDao.retrieveAccountJdos(reqt.getCustomerId(), bankerJdo.getBankId());
 		log.info("Retrieve accountJdos completed. No. of account:["+accountJdos.size()+"]");
+		
+		/**
+		 * TODO: check if user had privilege to access this customer
+		 */
 		
 		
 		/*
@@ -193,5 +199,55 @@ public class AccountAPI extends CommonAPI {
 		return resp;
 	}
 	
+	@RequireLoggedIn
+	@RequestMapping(value = "/getTransactions", method = RequestMethod.GET)
+	public @ResponseBody GetTransactionsResponse getTransactions (@Valid GetTransactionsRequest reqt) throws ApplicationException {
+		
+		log.info("API getTransactions start.");
+		
+		/*
+		 * Retrieve banker itself
+		 */
+		BankerJdo bankerJdo = bankerDao.retrieveBankerJdo(reqt.getUserId());
+		if (bankerJdo == null){ 
+			// Check whether could get bankerJdo by given user id.
+			//If couldn't, throw exception and say good bye
+			log.warning("banker cannot be found with given user id.");
+			throw new ApplicationException(ErrorCode.ERROR, "Internal Error");
+		}
+		log.info("Retrieve bankerJdo completed. bankerId:["+bankerJdo.getBankerId()+"]");
+		
+		/*
+		 * Retrieve account by given input
+		 */
+		AccountJdo accountJdo = accountDao.retrieveAccountJdoByAccountCodeBankId(reqt.getAccountCode(), bankerJdo.getBankId());
+		if (accountJdo == null){ 
+			// Check whether could get accountJdo by given given input
+			//If couldn't, throw exception and say good bye
+			log.warning("account cannot be found with given account id and bank id.");
+			throw new ApplicationException(ErrorCode.ACCOUNT_NOT_FOUND, "Account Not Found");
+		}
+		log.info("Retrieve accountJdo completed. accountId:["+accountJdo.getAccountId()+"]");
+		
+		/*
+		 * Retrieve transactions which belong to the account
+		 */
+		List<CashTransactionJdo> transactionJdos = cashTransactionDao.retrieveCashTransactionJdos(accountJdo.getAccountId());
+		log.info("Retrieve cachTransactionJdo completed. No. of transaction:["+transactionJdos.size()+"]");
+		
+		
+		/*
+		 * Prepare for response
+		 */
+		List<CashTransaction> cashTransactions = new  ArrayList<CashTransaction>();
+		for (CashTransactionJdo cashTransactionJdo:transactionJdos) {
+			cashTransactions.add(ModelHelper.convertCashTransactionJdoToCashTransaction(cashTransactionJdo));
+		}
+		
+		GetTransactionsResponse resp = new GetTransactionsResponse();
+		resp.setCashTransactions(cashTransactions);
+		log.info("API getTransactions end.");
+		return resp;
+	}
 
 }

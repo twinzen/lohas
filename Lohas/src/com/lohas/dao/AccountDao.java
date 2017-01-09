@@ -37,8 +37,8 @@ public class AccountDao {
 	/*
 	 * Get accounts by customerId
 	 */
-	public List<AccountJdo> retrieveAccountJdos (Long customerId) {
-		return ofy().load().type(AccountJdo.class).filter("customerId", customerId).list();
+	public List<AccountJdo> retrieveAccountJdos (Long customerId, Long bankId) {
+		return ofy().load().type(AccountJdo.class).filter("bankId", bankId).filter("customerId", customerId).list();
 	}
 	
 	/*
