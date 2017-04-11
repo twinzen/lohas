@@ -48,6 +48,14 @@ public class CustomerDao {
 	}
 	
 	/*
+	 * Get customers by bankId and username
+	 */
+	public CustomerJdo retrieveCustomerJdosByUsername (Long bankId, String username) {
+		return ofy().load().type(CustomerJdo.class).filter("bankId", bankId).filter("username", username).first().now();
+	}
+	
+	
+	/*
 	 * Persist customerJdo
 	 */
 	@SuppressWarnings("unchecked")

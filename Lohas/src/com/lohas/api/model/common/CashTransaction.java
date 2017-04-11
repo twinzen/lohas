@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
 
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Index;
@@ -89,7 +91,8 @@ public class CashTransaction {
 	public void setTransactionType(String transactionType) {
 		this.transactionType = transactionType;
 	}
-
+	
+	@JsonSerialize(using=JsonDateSerializer.class)
 	public Date getTransactionDateTime() {
 		return transactionDateTime;
 	}

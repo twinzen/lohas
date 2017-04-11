@@ -28,6 +28,8 @@ import com.lohas.api.model.LoginRequest;
 import com.lohas.api.model.LoginResponse;
 import com.lohas.api.model.RegisterCustomerRequest;
 import com.lohas.api.model.RegisterCustomerResponse;
+import com.lohas.api.model.UpdateCustomerProfileRequest;
+import com.lohas.api.model.UpdateCustomerProfileResponse;
 import com.lohas.api.model.common.Account;
 import com.lohas.api.model.common.Bank;
 import com.lohas.api.model.common.Banker;
@@ -55,7 +57,7 @@ import com.lohas.data.SessionJdo;
 @RequestMapping("/api")
 public class CustomerManagementAPI extends CommonAPI {
 
-	static Logger log = Logger.getLogger(BankAPI.class.getName());
+	static Logger log = Logger.getLogger(CustomerManagementAPI.class.getName());
 	MemcacheService cache = MemcacheServiceFactory.getMemcacheService();
 	
 	@Autowired
@@ -260,5 +262,59 @@ public class CustomerManagementAPI extends CommonAPI {
 		return resp;
 	}
 	
+	
+	/**
+	 * This API is for updating customer profile
+	 * Below information will be returned
+	 * Customer information 
+	 * 
+	 * @param reqt
+	 * @return
+	 * @throws ApplicationException
+	 */
+	@RequireLoggedIn
+	@RequestMapping(value = "/updateCustomerProfile", method = RequestMethod.GET)
+	public @ResponseBody UpdateCustomerProfileResponse updateCustomerProfile (@Valid UpdateCustomerProfileRequest reqt) throws ApplicationException {
+		
+		log.info("API updateCustomerProfile start.");
+		
+		/*
+		 * Retrieve banker itself
+		 */
+		BankerJdo bankerJdo = bankerDao.retrieveBankerJdo(reqt.getUserId());
+		if (bankerJdo == null){ 
+			// Check whether could get bankerJdo by given user id.
+			//If couldn't, throw exception and say good bye
+			log.warning("banker cannot be found with given user id.");
+			throw new ApplicationException(ErrorCode.ERROR, "Internal Error");
+		}
+		log.info("Retrieve bankerJdo completed. bankerId:["+bankerJdo.getBankerId()+"]");
+		
+		/*
+		 * Retrieve customers by given customer Id
+		 */
+		CustomerJdo customerJdo = customerDao.retrieveCustomerJdosByUsername(bankerJdo.getBankId(), reqt.getUsername());
+		if (customerJdo == null){ 
+			// Check whether could get customerJdo by given username.
+			//If couldn't, throw exception and say good bye
+			log.warning("customer cannot be found with username.");
+			throw new ApplicationException(ErrorCode.ERROR, "Internal Error");
+		}
+		log.info("Retrieve customerJdo complete");
+		
+		// Update the jdo, then save
+		customerJdo.setGender(reqt.getGender());
+		customerJdo.setDateOfBirth(reqt.getDateOfBirth());
+		customerJdo.setCustomerName(reqt.getCustomerName());
+		customerDao.persistCustomerJdo(customerJdo);
+		
+		// Convert jdo to api model
+		Customer customer = ModelHelper.convertCustomerJdoToCustomer(customerJdo, null);
+		
+		UpdateCustomerProfileResponse resp = new UpdateCustomerProfileResponse();
+		resp.setCustomer(customer);
+		log.info("API getCustomers end.");
+		return resp;
+	}
 
 }

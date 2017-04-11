@@ -8,6 +8,7 @@ import java.util.List;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Index;
 import com.lohas.data.AccountJdo;
+import com.lohas.data.AutoInstructionJdo;
 import com.lohas.data.BankJdo;
 import com.lohas.data.BankerJdo;
 import com.lohas.data.BlobImageJdo;
@@ -24,6 +25,9 @@ public class ModelHelper {
 	 * @return
 	 */
 	public static Banker convertBankerJdoToBanker (BankerJdo bankerJdo) {
+		if (bankerJdo == null) {
+			return null;
+		}
 		Banker banker = new Banker();
 		banker.setBankerId(bankerJdo.getBankerId());
 		banker.setPrimaryEmail(bankerJdo.getPrimaryEmail());
@@ -42,14 +46,19 @@ public class ModelHelper {
 	 * @return
 	 */
 	public static Bank convertBankJdoToBank (BankJdo bankJdo, List<BankerJdo> bankerJdoAdminList) {
+		if (bankJdo == null) {
+			return null;
+		}
 		Bank bank = new Bank();
 		bank.setBankId(bankJdo.getBankId());
 		bank.setBankName(bankJdo.getBankName());
 		bank.setBaseCurrency(bankJdo.getBaseCurrency());
 		List<Banker> bankerAdminList = new ArrayList<Banker>();
 		bank.setBankerAdminList(bankerAdminList);
-		for (BankerJdo bankerJdoAdmin: bankerJdoAdminList) {
-			bankerAdminList.add(convertBankerJdoToBanker(bankerJdoAdmin));
+		if (bankerJdoAdminList != null) {
+			for (BankerJdo bankerJdoAdmin: bankerJdoAdminList) {
+				bankerAdminList.add(convertBankerJdoToBanker(bankerJdoAdmin));
+			}
 		}
 		return bank;
 	}
@@ -64,6 +73,9 @@ public class ModelHelper {
 	 * @return
 	 */
 	public static Account convertAccountJdoToAccount (AccountJdo accountJdo, List<CashTransactionJdo> transactionJdos) {
+		if (accountJdo == null) {
+			return null;
+		}
 		Account account = new Account();
 		account.setAccountId(accountJdo.getAccountId());
 		account.setAccountCode(accountJdo.getAccountCode());
@@ -76,16 +88,19 @@ public class ModelHelper {
 		account.setInterestRate(accountJdo.getInterestRate());
 		BigDecimal accountBalanceAmount = new BigDecimal(0);
 		BigDecimal accountGainLossAmount = new BigDecimal(0);
-		for (CashTransactionJdo transactionJdo : transactionJdos) {
-			// Sum up all txn amount = account balance
-			if ("DEPOSIT".equals(transactionJdo.getTransactionType())) {
-				accountBalanceAmount = accountBalanceAmount.add(transactionJdo.getAmount());
-			} else {
-				accountBalanceAmount = accountBalanceAmount.subtract(transactionJdo.getAmount());
-			}
-			if (transactionJdo.getTransactionType().equals("INTEREST")) {
-				// Add all interest = gain/loss
-				accountGainLossAmount = accountGainLossAmount.add(transactionJdo.getAmount()); 
+		if (transactionJdos != null) {
+			for (CashTransactionJdo transactionJdo : transactionJdos) {
+				// Sum up all txn amount = account balance
+				if ("DEPOSIT".equals(transactionJdo.getTransactionType() )
+						||"INITIAL".equals(transactionJdo.getTransactionType())) {
+					accountBalanceAmount = accountBalanceAmount.add(transactionJdo.getAmount());
+				} else {
+					accountBalanceAmount = accountBalanceAmount.subtract(transactionJdo.getAmount());
+				}
+				if (transactionJdo.getTransactionType().equals("INTEREST")) {
+					// Add all interest = gain/loss
+					accountGainLossAmount = accountGainLossAmount.add(transactionJdo.getAmount()); 
+				}
 			}
 		}
 		account.setAccountBalanceAmount(accountBalanceAmount);
@@ -103,6 +118,9 @@ public class ModelHelper {
 	 * @return
 	 */
 	public static Customer convertCustomerJdoToCustomer (CustomerJdo customerJdo, List<Account> accounts) {
+		if (customerJdo == null) {
+			return null;
+		}
 		Customer customer = new Customer();
 		customer.setCustomerId(customerJdo.getCustomerId());
 		customer.setCustomerName(customerJdo.getCustomerName());
@@ -113,11 +131,13 @@ public class ModelHelper {
 		customer.setUsername(customerJdo.getUsername());
 		BigDecimal totalAssetValueAmount = new BigDecimal(0);
 		BigDecimal totalGainLossAmount = new BigDecimal(0);
-		for (Account account : accounts) {
-			// Add all account amount = total assest value
-			totalAssetValueAmount = totalAssetValueAmount.add(account.getAccountBalanceAmount()); 
-			// Add all account gain/lost = total gain/loss
-			totalGainLossAmount = totalGainLossAmount.add(account.getAccountGainLossAmount()); 
+		if (accounts != null) {
+			for (Account account : accounts) {
+				// Add all account amount = total assest value
+				totalAssetValueAmount = totalAssetValueAmount.add(account.getAccountBalanceAmount()); 
+				// Add all account gain/lost = total gain/loss
+				totalGainLossAmount = totalGainLossAmount.add(account.getAccountGainLossAmount()); 
+			}
 		}
 		customer.setTotalAssetValueAmount(totalAssetValueAmount);
 		customer.setTotalGainLossAmount(totalGainLossAmount);
@@ -132,6 +152,9 @@ public class ModelHelper {
 	 * @return
 	 */
 	public static CashTransaction convertCashTransactionJdoToCashTransaction (CashTransactionJdo cashTransactionJdo) {
+		if (cashTransactionJdo == null) {
+			return null;
+		}
 		CashTransaction cashTransaction = new CashTransaction();
 		cashTransaction.setTransactionId(cashTransactionJdo.getTransactionId());
 		cashTransaction.setTransactionCode(cashTransactionJdo.getTransactionCode());
@@ -142,6 +165,27 @@ public class ModelHelper {
 		cashTransaction.setNarrative(cashTransactionJdo.getNarrative());
 		cashTransaction.setAccountId(cashTransactionJdo.getAccountId());
 		return cashTransaction;
+	}
+	
+	/**
+	 * Convert AutoInstructionJdo to AutoInstruction model
+	 * Most of attributes should be converted
+	 * 
+	 * @param autoInstructionJdo
+	 * @return
+	 */
+	public static AutoInstruction convertAutoInstructionJdoToAutoInstruction (AutoInstructionJdo autoInstructionJdo) {
+		if (autoInstructionJdo == null) {
+			return null;
+		}
+		AutoInstruction autoInstruction = new AutoInstruction();
+		autoInstruction.setAccountId(autoInstructionJdo.getAccountId());
+		autoInstruction.setAutoInstructionId(autoInstructionJdo.getAutoInstructionId());
+		autoInstruction.setAmount(autoInstructionJdo.getAmount());
+		autoInstruction.setCurrency(autoInstructionJdo.getCurrency());
+		autoInstruction.setFrequency(autoInstructionJdo.getFrequency());
+		autoInstruction.setNarrative(autoInstructionJdo.getNarrative());
+		return autoInstruction;
 	}
 
 }

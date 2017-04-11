@@ -3,6 +3,8 @@ package com.lohas.api;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +26,8 @@ import com.lohas.api.constant.ErrorCode;
 import com.lohas.api.exception.ApplicationException;
 import com.lohas.api.model.GetAccountsRequest;
 import com.lohas.api.model.GetAccountsResponse;
+import com.lohas.api.model.GetAutoInstructionRequest;
+import com.lohas.api.model.GetAutoInstructionResponse;
 import com.lohas.api.model.GetCustomersRequest;
 import com.lohas.api.model.GetCustomersResponse;
 import com.lohas.api.model.GetTransactionsRequest;
@@ -34,6 +38,10 @@ import com.lohas.api.model.NewCashTxnRequest;
 import com.lohas.api.model.NewCashTxnResponse;
 import com.lohas.api.model.RegisterCustomerRequest;
 import com.lohas.api.model.RegisterCustomerResponse;
+import com.lohas.api.model.SetupAutoInstructionResponse;
+import com.lohas.api.model.SetupAutoIntructionRequest;
+import com.lohas.api.model.UpdateAutoInstructionResponse;
+import com.lohas.api.model.UpdateAutoIntructionRequest;
 import com.lohas.api.model.common.Account;
 import com.lohas.api.model.common.Bank;
 import com.lohas.api.model.common.Banker;
@@ -62,7 +70,7 @@ import com.lohas.data.SessionJdo;
 @RequestMapping("/api")
 public class AccountAPI extends CommonAPI {
 
-	static Logger log = Logger.getLogger(BankAPI.class.getName());
+	static Logger log = Logger.getLogger(AccountAPI.class.getName());
 	MemcacheService cache = MemcacheServiceFactory.getMemcacheService();
 	
 	@Autowired
@@ -85,75 +93,7 @@ public class AccountAPI extends CommonAPI {
 
 	@Autowired
 	AutoInstructionDao autoInstructionDao;
-	
-	/**
-	 * This API is for cash deposit/withdraw
-	 * Below information will be returned
-	 * New transaction information 
-	 * 
-	 * @param reqt
-	 * @return
-	 * @throws ApplicationException
-	 */
-	@RequireLoggedIn
-	@RequestMapping(value = "/newCashTxn", method = RequestMethod.GET)
-	public @ResponseBody NewCashTxnResponse newCashTxn (@Valid NewCashTxnRequest reqt) throws ApplicationException {
-		
-		log.info("API newCashTxn start.");
-		
-		/*
-		 * Retrieve banker itself
-		 */
-		BankerJdo bankerJdo = bankerDao.retrieveBankerJdo(reqt.getUserId());
-		if (bankerJdo == null){ 
-			// Check whether could get bankerJdo by given user id.
-			//If couldn't, throw exception and say good bye
-			log.warning("banker cannot be found with given user id.");
-			throw new ApplicationException(ErrorCode.ERROR, "Internal Error");
-		}
-		log.info("Retrieve bankerJdo completed. bankerId:["+bankerJdo.getBankerId()+"]");
-		
-		/*
-		 * Retrieve account by given input
-		 */
-		AccountJdo accountJdo = accountDao.retrieveAccountJdoByAccountCodeBankId(reqt.getAccountCode(), bankerJdo.getBankId());
-		if (accountJdo == null){ 
-			// Check whether could get accountJdo by given given input
-			//If couldn't, throw exception and say good bye
-			log.warning("account cannot be found with given account id and bank id.");
-			throw new ApplicationException(ErrorCode.ACCOUNT_NOT_FOUND, "Account Not Found");
-		}
-		log.info("Retrieve accountJdo completed. accountId:["+accountJdo.getAccountId()+"]");
 
-		/*
-		 * Create one transaction
-		 */
-		String transactionCodePrefix = (reqt.getTransactionType().equals("deposit"))?"D":"W";
-		CashTransactionJdo cashTransactionJdo = DataHelper.createCashTransactionJdo(
-				transactionCodePrefix+System.currentTimeMillis(), // "I" for initial
-				reqt.getTransactionType(), // txn type
-				(reqt.getTransactionDateTime()!=null)?reqt.getTransactionDateTime():new Date(), // txn date time
-				reqt.getAmount(), // txn amount
-				accountJdo.getAccountCurrency(), // txn currency must same as account currency for cash account
-				reqt.getNarrative(), // Narrative
-				accountJdo.getAccountId() // account Id
-				);
-		cashTransactionDao.persistCashTransactionJdo(cashTransactionJdo);
-		log.info("Create and persist cashTransactionJdo completed. transactionId: ["+cashTransactionJdo.getTransactionId()+"]");
-		
-		
-		/*
-		 * Prepare the response
-		 */
-		NewCashTxnResponse resp = new NewCashTxnResponse();
-		CashTransaction cashTransaction = ModelHelper.convertCashTransactionJdoToCashTransaction(cashTransactionJdo);
-		resp.setCashTransaction(cashTransaction);
-		log.info("API newCashTxn end.");
-		return resp;
-		
-	}
-	
-	
 	@RequireLoggedIn
 	@RequestMapping(value = "/getAccounts", method = RequestMethod.GET)
 	public @ResponseBody GetAccountsResponse getAccounts (@Valid GetAccountsRequest reqt) throws ApplicationException {
@@ -173,14 +113,24 @@ public class AccountAPI extends CommonAPI {
 		log.info("Retrieve bankerJdo completed. bankerId:["+bankerJdo.getBankerId()+"]");
 		
 		/*
+		 * Retrieve customer
+		 */
+		CustomerJdo customerJdo = customerDao.retrieveCustomerJdo(reqt.getCustomerId());
+		if (customerJdo != null) {
+			// Check if user had privilege to access this customer
+			if (!bankerJdo.getBankId().equals(customerJdo.getBankId())) {
+				// Bank ID is different
+				log.warning("banker has no privilege to access this customer");
+				throw new ApplicationException(ErrorCode.NO_PRIVILEGE, "No privilege.");
+			}
+		}
+		
+		
+		/*
 		 * Retrieve accounts which belong to the customer
 		 */
 		List<AccountJdo> accountJdos = accountDao.retrieveAccountJdos(reqt.getCustomerId(), bankerJdo.getBankId());
 		log.info("Retrieve accountJdos completed. No. of account:["+accountJdos.size()+"]");
-		
-		/**
-		 * TODO: check if user had privilege to access this customer
-		 */
 		
 		
 		/*
@@ -198,12 +148,13 @@ public class AccountAPI extends CommonAPI {
 		log.info("API getAccounts end.");
 		return resp;
 	}
+
 	
 	@RequireLoggedIn
-	@RequestMapping(value = "/getTransactions", method = RequestMethod.GET)
-	public @ResponseBody GetTransactionsResponse getTransactions (@Valid GetTransactionsRequest reqt) throws ApplicationException {
+	@RequestMapping(value = "/getAutoInstruction", method = RequestMethod.GET)
+	public @ResponseBody GetAutoInstructionResponse getAutoInstruction (@Valid GetAutoInstructionRequest reqt) throws ApplicationException {
 		
-		log.info("API getTransactions start.");
+		log.info("API getAutoInstruction start.");
 		
 		/*
 		 * Retrieve banker itself
@@ -217,37 +168,157 @@ public class AccountAPI extends CommonAPI {
 		}
 		log.info("Retrieve bankerJdo completed. bankerId:["+bankerJdo.getBankerId()+"]");
 		
+		
 		/*
-		 * Retrieve account by given input
+		 * Retrieve account
 		 */
-		AccountJdo accountJdo = accountDao.retrieveAccountJdoByAccountCodeBankId(reqt.getAccountCode(), bankerJdo.getBankId());
-		if (accountJdo == null){ 
-			// Check whether could get accountJdo by given given input
+		AccountJdo accountJdo = accountDao.retrieveAccountJdo(reqt.getAccountId());
+		if (accountJdo != null) {
+			// Check if user had privilege to access this customer
+			if (!bankerJdo.getBankId().equals(accountJdo.getBankId())) {
+				// Bank ID is different
+				log.warning("banker has no privilege to access this account");
+				throw new ApplicationException(ErrorCode.NO_PRIVILEGE, "No privilege.");
+			}
+		} else {
+			log.warning("account not found!");
+			throw new ApplicationException(ErrorCode.ERROR, "Internal Error.");
+		}
+		
+		
+		/*
+		 * Retrieve autoInstruction which belong to the account
+		 */
+		List<AutoInstructionJdo> autoInstructionJdos = autoInstructionDao.retrieveAutoInstructionJdos(reqt.getAccountId());
+		if (autoInstructionJdos != null) {
+			log.info("Retrieve autoInstructionJdo completed. No. of autoInstruction:["+autoInstructionJdos.size()+"]");
+		}
+		/**
+		 * TODO assume one autoInstruction per account
+		 */
+		AutoInstructionJdo autoInstructionJdo = (autoInstructionJdos!=null)?autoInstructionJdos.get(0):null;
+		
+		GetAutoInstructionResponse resp = new GetAutoInstructionResponse();
+		resp.setAutoInstrution(ModelHelper.convertAutoInstructionJdoToAutoInstruction(autoInstructionJdo));
+		log.info("API getAutoInstruction end.");
+		return resp;
+	}
+	
+	@RequireLoggedIn
+	@RequestMapping(value = "/updateAutoInstruction", method = RequestMethod.GET)
+	public @ResponseBody UpdateAutoInstructionResponse updateAutoInstruction (@Valid UpdateAutoIntructionRequest reqt) throws ApplicationException {
+		
+		log.info("API updateAutoInstruction start.");
+		
+		/*
+		 * Retrieve banker itself
+		 */
+		BankerJdo bankerJdo = bankerDao.retrieveBankerJdo(reqt.getUserId());
+		if (bankerJdo == null){ 
+			// Check whether could get bankerJdo by given user id.
 			//If couldn't, throw exception and say good bye
-			log.warning("account cannot be found with given account id and bank id.");
-			throw new ApplicationException(ErrorCode.ACCOUNT_NOT_FOUND, "Account Not Found");
+			log.warning("banker cannot be found with given user id.");
+			throw new ApplicationException(ErrorCode.ERROR, "Internal Error");
 		}
-		log.info("Retrieve accountJdo completed. accountId:["+accountJdo.getAccountId()+"]");
-		
-		/*
-		 * Retrieve transactions which belong to the account
-		 */
-		List<CashTransactionJdo> transactionJdos = cashTransactionDao.retrieveCashTransactionJdos(accountJdo.getAccountId());
-		log.info("Retrieve cachTransactionJdo completed. No. of transaction:["+transactionJdos.size()+"]");
+		log.info("Retrieve bankerJdo completed. bankerId:["+bankerJdo.getBankerId()+"]");
 		
 		
 		/*
-		 * Prepare for response
+		 * Retrieve autoInstructionJdo
 		 */
-		List<CashTransaction> cashTransactions = new  ArrayList<CashTransaction>();
-		for (CashTransactionJdo cashTransactionJdo:transactionJdos) {
-			cashTransactions.add(ModelHelper.convertCashTransactionJdoToCashTransaction(cashTransactionJdo));
+		AutoInstructionJdo autoInstructionJdo = autoInstructionDao.retrieveAutoInstructionJdo(reqt.getAutoInstructionId());
+		if (autoInstructionJdo != null) {
+			// Check if user had privilege to access this customer
+			// Firstly, get the corresponding account first
+			AccountJdo accountJdo = accountDao.retrieveAccountJdo(autoInstructionJdo.getAccountId());
+			if (accountJdo != null) {
+				// Check if user had privilege to access this customer
+				if (!bankerJdo.getBankId().equals(accountJdo.getBankId())) {
+					// Bank ID is different
+					log.warning("banker has no privilege to access this account");
+					throw new ApplicationException(ErrorCode.NO_PRIVILEGE, "No privilege.");
+				}
+			} else {
+				log.warning("account not found!");
+				throw new ApplicationException(ErrorCode.ERROR, "Internal Error.");
+			}
+		} else {
+			log.warning("autoInstruction not found!");
+			throw new ApplicationException(ErrorCode.ERROR, "Internal Error.");
 		}
 		
-		GetTransactionsResponse resp = new GetTransactionsResponse();
-		resp.setCashTransactions(cashTransactions);
-		log.info("API getTransactions end.");
+		
+		/*
+		 * Update the autoInstructionJdo and then persist
+		 */
+		autoInstructionJdo.setAmount(reqt.getAutoInstructionAmount());
+		autoInstructionJdo.setFrequency(reqt.getAutoInstructionFrequency());
+		autoInstructionDao.persistAutoInstructionJdo(autoInstructionJdo);
+		
+		UpdateAutoInstructionResponse resp = new UpdateAutoInstructionResponse();
+		resp.setAutoInstrution(ModelHelper.convertAutoInstructionJdoToAutoInstruction(autoInstructionJdo));
+		log.info("API updateAutoInstruction end.");
 		return resp;
 	}
 
+	
+	@RequireLoggedIn
+	@RequestMapping(value = "/setupAutoInstruction", method = RequestMethod.GET)
+	public @ResponseBody SetupAutoInstructionResponse setupAutoInstruction (@Valid SetupAutoIntructionRequest reqt) throws ApplicationException {
+		
+		log.info("API setupAutoInstruction start.");
+		
+		/*
+		 * Retrieve banker itself
+		 */
+		BankerJdo bankerJdo = bankerDao.retrieveBankerJdo(reqt.getUserId());
+		if (bankerJdo == null){ 
+			// Check whether could get bankerJdo by given user id.
+			//If couldn't, throw exception and say good bye
+			log.warning("banker cannot be found with given user id.");
+			throw new ApplicationException(ErrorCode.ERROR, "Internal Error");
+		}
+		log.info("Retrieve bankerJdo completed. bankerId:["+bankerJdo.getBankerId()+"]");
+		
+		
+		/*
+		 * Retrieve account
+		 */
+		AccountJdo accountJdo = accountDao.retrieveAccountJdo(reqt.getAccountId());
+		if (accountJdo != null) {
+			// Check if user had privilege to access this customer
+			if (!bankerJdo.getBankId().equals(accountJdo.getBankId())) {
+				// Bank ID is different
+				log.warning("banker has no privilege to access this account");
+				throw new ApplicationException(ErrorCode.NO_PRIVILEGE, "No privilege.");
+			}
+		} else {
+			log.warning("account not found!");
+			throw new ApplicationException(ErrorCode.ERROR, "Internal Error.");
+		}
+		
+		
+		/*
+		 * Create new autoInstructionJdo and then persist
+		 */
+		/*
+		 * Create auto instruction
+		 */
+		AutoInstructionJdo autoInstructionJdo = DataHelper.createAutoInstructionJdo(
+				reqt.getAutoInstructionFrequency(), // frequency
+				reqt.getAutoInstructionAmount(), // amount
+				accountJdo.getAccountCurrency(), // currency
+				"Regular top-up", // narrative
+				accountJdo.getAccountId() // account Id
+				);
+		autoInstructionDao.persistAutoInstructionJdo(autoInstructionJdo);
+		log.info("Create and persist autoInstructionJdo completed. autoInstructionId: ["+autoInstructionJdo.getAutoInstructionId()+"]");
+		
+		SetupAutoInstructionResponse resp = new SetupAutoInstructionResponse();
+		resp.setAutoInstrution(ModelHelper.convertAutoInstructionJdoToAutoInstruction(autoInstructionJdo));
+		log.info("API setupAutoInstruction end.");
+		return resp;
+	}
+	
+	
 }
